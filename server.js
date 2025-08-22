@@ -19,8 +19,8 @@ const PORT = process.env.PORT || 3000;
 
 // --- CORS configuration ---
 const corsOptions = {
-  origin: "http://localhost:5173", // frontend URL
-  credentials: true,               // allow cookies
+  origin: ["http://localhost:5173", "https://mernfrntend.vercel.app"], // explicitly allow array
+  credentials: true, // allow cookies
 };
 app.use(cors(corsOptions));
 
@@ -33,7 +33,11 @@ app.use(clerkMiddleware());
 app.use(security());
 
 // --- Serve static files with CORS ---
-app.use("/uploads", cors(corsOptions), express.static(path.join(process.cwd(), "uploads")));
+app.use(
+  "/uploads",
+  cors(corsOptions),
+  express.static(path.join(process.cwd(), "uploads"))
+);
 
 // --- Routes ---
 app.get("/", (req, res) => {
