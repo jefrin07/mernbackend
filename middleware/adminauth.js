@@ -1,27 +1,22 @@
-import jwt from "jsonwebtoken";
-import Admin from "../models/Admin.js";
+import { clerkClient } from "@clerk/express";
 
 export const adminauth = async (req, res, next) => {
   try {
-    const token = req.cookies.token; // read token from cookie
+    const { userId } = req.auth();
 
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Not authorized" });
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
+    const user = await clerkClient.users.getUser(userId);
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Attach admin user to request (optional)
-    req.admin = await Admin.findById(decoded.id).select("-password");
-
-    if (!req.admin) {
-      return res.status(401).json({ success: false, message: "Not authorized" });
+    if (user.privateMetadata.role !== "admin") {
+      return res
+        .status(403)
+        .json({ success: false, message: "Forbidden: Admins only" });
     }
-
     next();
-  } catch (err) {
-    console.error("Auth error:", err.message);
-    return res.status(401).json({ success: false, message: "Not authorized, token failed" });
+  } catch (error) {
+    console.error("Error in protectAdmin middleware:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

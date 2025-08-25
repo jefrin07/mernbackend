@@ -7,7 +7,6 @@ export function errorHandler(err, req, res, _next) {
   if (err.name === "ValidationError") {
     const errors = {};
     for (let field in err.errors) {
-      // Clean the message to remove "Path `...`" and backticks
       const message = err.errors[field].message.replace(/Path `.*`/, field);
       errors[field] = message;
     }

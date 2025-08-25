@@ -3,16 +3,19 @@ import cors from "cors";
 import "dotenv/config";
 import path from "path";
 import cookieParser from "cookie-parser";
-
 import connectDB from "./configs/db.js";
 import { clerkMiddleware } from "@clerk/express";
 import { functions, inngest } from "./inngest/index.js";
 import { serve } from "inngest/express";
 import { security } from "./middleware/security.js";
 import movieRoutes from "./routes/movieRoutes.js";
-import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import { adminauth } from "./middleware/adminauth.js";
 import { errorHandler } from "./middleware/error.js";
+import showRoutes from "./routes/showRoutes.js";
+import homeRoutes from "./routes/homeRoutes.js";
+import bookingRouter from "./routes/bookingRoutes.js";
+import userRouter from "./routes/userRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -46,8 +49,12 @@ app.get("/", (req, res) => {
 
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
-app.use("/admin/api/auth", adminAuthRoutes);
+app.use("/admin/api/admin", adminRoutes);
 app.use("/admin/api/movies", adminauth, movieRoutes);
+app.use("/admin/api/movies/show", adminauth, showRoutes);
+app.use("/api/movies", homeRoutes);
+app.use("/api/movies/booking", bookingRouter);
+app.use("/api/user", userRouter);
 
 // --- Error handler ---
 app.use(errorHandler);

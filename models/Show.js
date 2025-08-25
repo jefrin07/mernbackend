@@ -5,6 +5,10 @@ const showSchema = new mongoose.Schema(
     movie: { type: String, required: true, ref: "Movie" },
     showDateTime: { type: Date, required: true },
     showPrice: { type: Number, required: true },
+    is_active: {
+      type: Boolean,
+      default: false,
+    },
     occupied_seats: { type: Object, default: {} },
   },
   { minimize: false }
