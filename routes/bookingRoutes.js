@@ -3,10 +3,13 @@ import {
   createBooking,
   getOccupiedSeats,
 } from "../controllers/bookingController.js";
+import { notAllowed } from "../middleware/error.js";
 
-const bookingRouter = express.Router();
+const bookingRoutes = express.Router();
 
-bookingRouter.post("/create", createBooking);
-bookingRouter.get("/seats/:showId", getOccupiedSeats);
+bookingRoutes.post("/createBooking", createBooking);
+bookingRoutes.all("/create", notAllowed);
+bookingRoutes.get("/seats/:showId", getOccupiedSeats);
+bookingRoutes.all("/seats/:showId", notAllowed);
 
-export default bookingRouter;
+export default bookingRoutes;

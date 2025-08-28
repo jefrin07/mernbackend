@@ -13,7 +13,7 @@ import { adminauth } from "./middleware/adminauth.js";
 import { errorHandler } from "./middleware/error.js";
 import showRoutes from "./routes/showRoutes.js";
 import homeRoutes from "./routes/homeRoutes.js";
-import bookingRouter from "./routes/bookingRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
@@ -53,7 +53,7 @@ app.use("/admin/api/admin", adminRoutes);
 app.use("/admin/api/movies", adminauth, movieRoutes);
 app.use("/admin/api/movies/show", adminauth, showRoutes);
 app.use("/api/movies", homeRoutes);
-app.use("/api/movies/booking", bookingRouter);
+app.use("/api/moviesbooking", bookingRoutes);
 app.use("/api/user", userRouter);
 
 // --- Error handler ---

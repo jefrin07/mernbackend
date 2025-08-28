@@ -27,21 +27,27 @@ export const isAdmin = async (req, res) => {
 export const getDashboardData = async (req, res) => {
   try {
     const bookings = await Booking.find({ isPaid: true });
+
     const activeShows = await Show.find({
       is_active: true,
       showDateTime: { $gte: new Date() },
-    }).populate("movie");
+    }).populate("movie"); // ✅ populate movie info (title, poster, rating, etc.)
+
     const totalUsers = await User.countDocuments();
+
     const totalRevenue = bookings.reduce(
       (sum, booking) => sum + (booking.amount || 0),
       0
     );
+
     const dashdata = {
       totalBookings: bookings.length,
       totalRevenue,
       totalUsers,
       totalActiveShows: activeShows.length,
+      activeShows, // ✅ send the array to frontend
     };
+
     res.json({ success: true, data: dashdata });
   } catch (error) {
     console.error("Error in getDashboardData:", error);

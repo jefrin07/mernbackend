@@ -1,37 +1,19 @@
 import Show from "../models/Show.js";
 import Booking from "../models/Booking.js";
 
-const checkSeatsAvailability = async (showId, selectedSeats) => {
-  try {
-    const showData = await Show.findById(showId);
-    if (!showData) return false;
-
-    const occupiedSeats = showData.occupiedSeats;
-
-    const isAnySeatTaken = selectedSeats.some((seat) => occupiedSeats[seat]);
-
-    return !isAnySeatTaken;
-  } catch (error) {
-    console.log(error.message);
-    return false;
-  }
-};
 
 export const createBooking = async (req, res) => {
   try {
-    const { userId } = req.auth(); // adjust based on your auth middleware
-    const { showId, selectedSeats } = req.body;
 
-    // 1. Check seat availability
-    const isAvailable = await checkSeatsAvailability(showId, selectedSeats);
-    if (!isAvailable) {
+    const { userId } = req.auth(); 
+    const { showId, selectedSeats } = req.body;
+    if (!showId || !selectedSeats || !Array.isArray(selectedSeats)) {
+      console.log("Invalid request data");
       return res.status(400).json({
         success: false,
-        message: "Some seats are already occupied",
+        message: "showId and selectedSeats are required and must be an array",
       });
     }
-
-    // 2. Get show
     const showData = await Show.findById(showId).populate("movie");
     if (!showData) {
       return res.status(404).json({
@@ -40,7 +22,18 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // 3. Create booking
+    const unavailableSeats = selectedSeats.filter(
+      (seat) => showData.occupied_seats[seat]
+    );
+
+    if (unavailableSeats.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Some seats are already occupied",
+        unavailableSeats,
+      });
+    }
+
     const booking = await Booking.create({
       user: userId,
       show: showId,
@@ -48,14 +41,11 @@ export const createBooking = async (req, res) => {
       bookedSeats: selectedSeats,
     });
 
-    // 4. Mark seats as occupied
     selectedSeats.forEach((seat) => {
-      showData.occupied_seats[seat] = userId; // or `true` if you don’t need userId
+      showData.occupied_seats[seat] = userId; // or true if you don't need userId
     });
     showData.markModified("occupied_seats");
     await showData.save();
-
-    // 5. Send success response
     res.status(201).json({
       success: true,
       message: "Booking successful",
@@ -69,6 +59,7 @@ export const createBooking = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Internal server error",
+      error: error.message,
     });
   }
 };

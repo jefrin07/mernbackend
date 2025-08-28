@@ -1,6 +1,7 @@
 import { asyncHandler } from "../middleware/error.js";
 import Movie from "../models/Movie.js";
 import Show from "../models/Show.js";
+import mongoose from "mongoose";
 
 export const getMovies = asyncHandler(async (_req, res) => {
   const now = new Date();
@@ -28,12 +29,15 @@ export const getMovieDetails = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const now = new Date();
 
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ status: 400, message: "Invalid movie ID" });
+  }
+
   const movie = await Movie.findById(id);
   if (!movie) {
     return res.status(404).json({ status: 404, message: "Movie not found" });
   }
 
-  // Get only future active shows
   const shows = await Show.find({
     movie: id,
     showDateTime: { $gt: now },
@@ -46,27 +50,26 @@ export const getMovieDetails = asyncHandler(async (req, res) => {
     data: { movie, shows },
   });
 });
+
 export const getShowDetails = asyncHandler(async (req, res) => {
-  const { id, date } = req.params; // id = movieId, date = YYYY-MM-DD
+  const { id, date } = req.params;
   const now = new Date();
 
-  // Validate movie
-  const movie = await Movie.findById(id);
-  if (!movie) {
-    return res.status(404).json({
-      status: 404,
-      message: "Movie not found",
-    });
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ status: 400, message: "Invalid movie ID" });
   }
 
-  // Define date range for that day
+  const movie = await Movie.findById(id);
+  if (!movie) {
+    return res.status(404).json({ status: 404, message: "Movie not found" });
+  }
+
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0);
 
   const endOfDay = new Date(date);
   endOfDay.setHours(23, 59, 59, 999);
 
-  // Find shows for that movie on the given date (future + active)
   const shows = await Show.find({
     movie: id,
     showDateTime: { $gte: startOfDay, $lte: endOfDay, $gt: now },
@@ -76,9 +79,7 @@ export const getShowDetails = asyncHandler(async (req, res) => {
   res.json({
     status: 200,
     message: "Shows fetched successfully",
-    data: {
-      movie,
-      shows,
-    },
+    data: { movie, shows },
   });
 });
+
