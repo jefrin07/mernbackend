@@ -7,7 +7,6 @@ export const stripeWebHooks = async (req, res) => {
   let event;
 
   try {
-    // ⚠️ Important: make sure raw body is passed (not JSON-parsed)
     event = stripeInstance.webhooks.constructEvent(
       req.body,
       sig,
