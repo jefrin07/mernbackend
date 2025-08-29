@@ -76,18 +76,29 @@ export const getAllShows = async (req, res) => {
 export const getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({})
-      .populate("user", "firstName lastName email") // only return selected fields
       .populate({
         path: "show",
-        populate: { path: "movie", select: "title genre duration" }, // populate movie inside show
+        populate: { path: "movie", select: "title genre duration" },
       })
       .sort({ createdAt: -1 })
-      .lean(); // return plain JSON
+      .lean();
+    const userIds = [...new Set(bookings.map((b) => b.user))];
+    const users = await User.find({ _id: { $in: userIds } })
+      .select("name")
+      .lean();
+    const userMap = users.reduce((acc, u) => {
+      acc[u._id] = u;
+      return acc;
+    }, {});
+    const formattedBookings = bookings.map((b) => ({
+      ...b,
+      userName: userMap[b.user]?.name || null,
+    }));
 
     res.json({
       success: true,
-      total: bookings.length,
-      bookings,
+      total: formattedBookings.length,
+      bookings: formattedBookings,
     });
   } catch (error) {
     console.error("Error fetching bookings:", error);
