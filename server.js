@@ -16,6 +16,7 @@ import homeRoutes from "./routes/homeRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import userRouter from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import { stripeWebHooks } from "./controllers/strpewebhooks.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +27,12 @@ const corsOptions = {
   credentials: true, // allow cookies
 };
 app.use(cors(corsOptions));
+
+app.use(
+  "/api/stripe",
+  express.raw({ type: "application/json" }),
+  stripeWebHooks
+);
 
 // --- Middleware ---
 app.use(express.json());
