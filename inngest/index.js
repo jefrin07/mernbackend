@@ -82,12 +82,11 @@ const sendBookingEmail = inngest.createFunction(
   { event: "app/show.booked" }, // event name to listen for
   async ({ event, step }) => {
     const { bookingId } = event.data;
-    const booking = await Booking.findById(bookingId)
-      .populate({
-        path: "show",
-        populate: { path: "movie", model: "Movie" },
-      })
-      .populate("user");
+    const booking = await Booking.findById(bookingId).populate([
+      { path: "user", model: "User" },
+      { path: "show", populate: { path: "movie", model: "Movie" } },
+    ]);
+
     await sendmail({
       to: booking.user.email,
       subject: `Payment Confirmation: "${booking.show.movie.title}" booked!`,

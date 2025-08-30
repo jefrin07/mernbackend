@@ -10,6 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+
 const sendmail = async ({ to, subject, body }) => {
   const response = await transporter.sendMail({
     from: process.env.EMAIL_USER,
