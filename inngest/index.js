@@ -114,91 +114,10 @@ const sendBookingEmail = inngest.createFunction(
   }
 );
 
-// 1️⃣ Schedule reminder when booking happens
-const scheduleReminderEmail = inngest.createFunction(
-  { id: "schedule-reminder-email" },
-  { event: "app/show.booked" }, // trigger on booking
-  async ({ event, step }) => {
-    const { bookingId } = event.data;
-
-    // Fetch booking with populated details
-    const booking = await Booking.findById(bookingId).populate([
-      { path: "user", model: "User" },
-      { path: "show", populate: { path: "movie", model: "Movie" } },
-    ]);
-
-    if (!booking?.user?.email) {
-      throw new Error("❌ No user email found for booking " + bookingId);
-    }
-
-    const showTime = new Date(booking.show.showDateTime);
-
-    // Reminder time = 1 hour before show
-    const reminderTime = new Date(showTime.getTime() - 60 * 60 * 1000);
-
-    // Schedule new event for that time
-    await step.sendEvent({
-      name: "app/show.reminder",
-      data: { bookingId },
-      ts: reminderTime, // execute at reminder time
-    });
-
-    return { scheduled: true, reminderTime };
-  }
-);
-
-// 2️⃣ Handle the reminder event & send email
-const sendReminderEmail = inngest.createFunction(
-  { id: "send-reminder-email" },
-  { event: "app/show.reminder" }, // fires at reminder time
-  async ({ event }) => {
-    const { bookingId } = event.data;
-
-    // Fetch booking again
-    const booking = await Booking.findById(bookingId).populate([
-      { path: "user", model: "User" },
-      { path: "show", populate: { path: "movie", model: "Movie" } },
-    ]);
-
-    if (!booking?.user?.email) {
-      throw new Error("❌ No user email found for booking " + bookingId);
-    }
-
-    await sendmail({
-      to: booking.user.email,
-      subject: `Reminder: "${booking.show.movie.title}" starts soon!`,
-      body: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-          <h2>Hi ${booking.user.name},</h2>
-          <p>This is a friendly reminder that your show 
-            <strong style="color: #F84565;">"${
-              booking.show.movie.title
-            }"</strong> 
-            will start in 1 hour.</p>
-          <p>
-            <strong>Date:</strong> ${new Date(
-              booking.show.showDateTime
-            ).toLocaleDateString("en-US", { timeZone: "Asia/Kolkata" })}<br/>
-            <strong>Time:</strong> ${new Date(
-              booking.show.showDateTime
-            ).toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata" })}
-          </p>
-          <p>Don't miss it! 🍿</p>
-          <p>— BMS Team</p>
-        </div>
-      `,
-    });
-
-    return { success: true, message: "Reminder email sent" };
-  }
-);
-
 export const functions = [
   syncUserCreation,
   syncUserDeletion,
   syncUserUpdate,
   releaseSeatsAndDeleteBooking,
   sendBookingEmail,
-  scheduleReminderEmail,
-  sendReminderEmail,
 ];
